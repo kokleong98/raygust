@@ -5,31 +5,6 @@ using System.Globalization;
 
 namespace Raygust.App.EthminerMan
 {
-    internal class Gpu
-    {
-        public double speed;
-        public double minThreshold = 10.0;
-        public DateTime minThresholdMetTime = DateTime.Now;
-        public bool minThresholdMet()
-        {
-            return (speed >= minThreshold);
-        }
-        public int elapsedThresholdMetSeconds()
-        {
-            return Convert.ToInt32(DateTime.Now.Subtract(minThresholdMetTime).Duration().TotalSeconds);
-        }
-    }
-
-    internal class MinerData
-    {
-        public double totalspeed = 0.0;
-        public Gpu[] Gpus = { };
-        public DateTime lastUpdate = DateTime.Now;
-        public int accepted = 0;
-        public int rejected = 0;
-        public int failed = 0;
-    }
-
     internal class EthminerParser
     {
         private string data;
@@ -86,8 +61,8 @@ namespace Raygust.App.EthminerMan
             int size = gpuspeeds.Length / 2;
             if (minerInfo.Gpus.Length < size)
             {
-                Array.Resize<Gpu>(ref minerInfo.Gpus, size);
-                minerInfo.Gpus[size - 1] = new Gpu();
+                Array.Resize<GpuInfo>(ref minerInfo.Gpus, size);
+                minerInfo.Gpus[size - 1] = new GpuInfo();
                 minerInfo.Gpus[size - 1].minThreshold = minSpeedThreshold;
                 minerInfo.Gpus[size - 1].minThresholdMetTime = DateTime.Now;
             }

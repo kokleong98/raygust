@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<configuration>
+  <params>
+    <param name="-tlimit" />
+    <param name="-dlimit" />
+  </params>
+</configuration>

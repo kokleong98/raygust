@@ -3,68 +3,38 @@ using System.Collections.Generic;
 using System.Text;
 using System.Diagnostics;
 using System.Threading;
+using Raygust.Core.Parser;
 
 namespace Raygust.App.EthminerMan
 {
     class Program
     {
+        const double DEFAULT_THRESHOLD = 10.0; //Measure in MH/s.
+        const int DEFAULT_THRESHOLD_DURATION = 300; //Measure in seconds wait.
+        const int CHECK_INTERVAL = 1000; //Measure in milliseconds.
         static EthminerParser parser = new EthminerParser();
 
         static void Main(string[] args)
         {
             ProcessStartInfo info = new ProcessStartInfo();
-            string arg = String.Join(" ", args);
-            int indexstart = -1;
-            bool special = false;
-            bool special2 = false;
-            double minSpeedThreshold = 10.0;
-            int duration = 300;
+            ArgumentConfigurations argConfigs = new ArgumentConfigurations();
+            ArgumentParser argParser = new ArgumentParser(args, argConfigs);
+            argConfigs.Load(Properties.Resources.Parameters);
+            double minSpeedThreshold = DEFAULT_THRESHOLD;
+            int duration = DEFAULT_THRESHOLD_DURATION;
 
-            for (int i = 0; i < args.Length; i++)
-            {
-                if (args[i].StartsWith("-tlimit"))
-                {
-                    special = true;
-                    continue;
-                }
-                if (special && args[i].StartsWith("-"))
-                {
-                    indexstart = i;
-                    double.TryParse(args[i - 1], out minSpeedThreshold);
-                    parser.minSpeedThreshold = minSpeedThreshold;
-                    break;
-                }
-            }
-            for (int i = 0; i < args.Length; i++)
-            {
-                if (args[i].StartsWith("-dlimit"))
-                {
-                    special2 = true;
-                    continue;
-                }
-                if (special2 && args[i].StartsWith("-"))
-                {
-                    if (i > indexstart)
-                        indexstart = i;
-                    int.TryParse(args[i - 1], out duration);
-                    parser.duration = duration;
-                    break;
-                }
-            }
+            argParser.GetParamAsDouble("-tlimit", ref minSpeedThreshold);
+            parser.minSpeedThreshold = minSpeedThreshold;
+            argParser.GetParamAsInt("-dlimit", ref duration);
+            parser.duration = duration;
 
-            if (special || special2)
-            {
-                arg = String.Join(" ", args, indexstart, args.Length - indexstart);
-            }
-
-
-            info.Arguments = arg;
+            info.Arguments = string.Join(" ", argParser.ExtractUnknownArguments());
             info.FileName = @"ethminer.exe";
             Process p = new Process();
             p.StartInfo = info;
             p.EnableRaisingEvents = true;
-            p.OutputDataReceived += P_OutputDataReceived;
-            p.ErrorDataReceived += P_ErrorDataReceived;
+            p.OutputDataReceived += ProcessConsoleOutput;
+            p.ErrorDataReceived += ProcessConsoleOutput;
 
             info.RedirectStandardError = true;
             info.RedirectStandardOutput = true;
@@ -75,7 +45,7 @@ namespace Raygust.App.EthminerMan
             p.Start();
             p.BeginOutputReadLine();
             p.BeginErrorReadLine();
-            while (!p.WaitForExit(1000))
+            while (!p.WaitForExit(CHECK_INTERVAL))
             {
                 Monitor.Enter(parser);
                 if (parser.Break())
@@ -91,23 +61,17 @@ namespace Raygust.App.EthminerMan
                 }
                 Monitor.Exit(parser);
             }
-
         }
 
-        private static void P_ErrorDataReceived(object sender, DataReceivedEventArgs e)
+        private static void ProcessConsoleOutput(object sender, DataReceivedEventArgs e)
         {
+            Monitor.Enter(parser);
             Console.ResetColor();
             Console.WriteLine(e.Data);
-            Monitor.Enter(parser);
             Console.ForegroundColor = ConsoleColor.Green;
             parser.Parse(e.Data);
             parser.PrintSpeedMessage();
             Monitor.Exit(parser);
-        }
-
-        static void P_OutputDataReceived(object sender, DataReceivedEventArgs e)
-        {
-            Debug.Print("Out: " + e.Data);
         }
     }
 }
