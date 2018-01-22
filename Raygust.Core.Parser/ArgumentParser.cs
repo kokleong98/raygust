@@ -32,6 +32,11 @@ namespace Raygust.Core.Parser
             return result;
         }
 
+        public bool ParamExist(string paramName)
+        {
+            return (GetParamIndex(paramName) >= 0);
+        }
+
         public string GetParam(string paramName)
         {
             string result = string.Empty;

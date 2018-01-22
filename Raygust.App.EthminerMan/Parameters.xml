@@ -3,5 +3,6 @@
   <params>
     <param name="-tlimit" />
     <param name="-dlimit" />
+    <param name="-debug" />
   </params>
 </configuration>
