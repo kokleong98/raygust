@@ -31,6 +31,7 @@ namespace Raygust.App.EthminerMan
 
         public void Start(bool runningConsole)
         {
+            _runningConsole = runningConsole;
             ProcessStartInfo info = new ProcessStartInfo();
             ArgumentConfigurations argConfigs = new ArgumentConfigurations();
             ArgumentParser argParser = new ArgumentParser(_args, argConfigs);

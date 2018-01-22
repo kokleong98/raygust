@@ -7,7 +7,6 @@ namespace Raygust.App.EthminerMan
     {
         private string data;
         public MinerData minerInfo = new MinerData();
-
         public string source;
         public DateTime time;
         public string identifier;
@@ -102,24 +101,17 @@ namespace Raygust.App.EthminerMan
 
         public void PrintSpeedMessage()
         {
-            Console.Write("total speed: " + minerInfo.totalspeed.ToString());
+            Console.Write(string.Format("total speed: {0}", minerInfo.totalspeed));
             for (int i = 0; i < minerInfo.Gpus.Length; i++)
             {
-                Console.Write(", GPU");
-                Console.Write(i.ToString() + ":");
-                Console.Write(minerInfo.Gpus[i].speed.ToString());
-                Console.Write(", ");
-                Console.Write(minerInfo.Gpus[i].minThresholdMet().ToString());
-                Console.Write(", ");
-                Console.Write(minerInfo.Gpus[i].elapsedThresholdMetSeconds());
+                Console.Write(string.Format(", GPU{0}:{1}, {2}, {3}", i, 
+                    minerInfo.Gpus[i].speed, 
+                    minerInfo.Gpus[i].minThresholdMet(), 
+                    minerInfo.Gpus[i].elapsedThresholdMetSeconds()));
             }
-            Console.Write(", A:");
-            Console.Write(minerInfo.accepted);
-            Console.Write(" R:");
-            Console.Write(minerInfo.rejected);
-            Console.Write(" F:");
-            Console.Write(minerInfo.failed);
-            Console.WriteLine();
+            Console.WriteLine(string.Format(", A:{0} R:{1} F:{2}", minerInfo.accepted,
+                minerInfo.rejected,
+                minerInfo.failed));
         }
     }
 }
