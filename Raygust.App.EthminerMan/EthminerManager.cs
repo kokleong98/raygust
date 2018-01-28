@@ -31,7 +31,6 @@ namespace Raygust.App.EthminerMan
 
         public void Start(bool runningConsole)
         {
-            //CUDA error in func 'ethash_cuda_miner::search' at line 346 : an illegal instruction was encountered.
             _runningConsole = runningConsole;
             ProcessStartInfo info = new ProcessStartInfo();
             ArgumentConfigurations argConfigs = new ArgumentConfigurations();
