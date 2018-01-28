@@ -37,7 +37,7 @@ namespace Raygust.App.EthminerMan
                 time.AddDays(-1);
             }
             identifier = data.Substring(14, 10).Trim();
-            message = data.Substring(24);
+            message = data.Substring(24).Trim();
             ProcessSpeedMessage(message);
 
             return result;
@@ -58,17 +58,20 @@ namespace Raygust.App.EthminerMan
             int size = gpuspeeds.Length / 2;
             if (minerInfo.Gpus.Length < size)
             {
-                Array.Resize<GpuInfo>(ref minerInfo.Gpus, size);
-                minerInfo.Gpus[size - 1] = new GpuInfo();
-                minerInfo.Gpus[size - 1].minThreshold = minSpeedThreshold;
-                minerInfo.Gpus[size - 1].minThresholdMetTime = DateTime.Now;
+                for(int i = minerInfo.Gpus.Length; i < size; i++)
+                {
+                    Array.Resize<GpuInfo>(ref minerInfo.Gpus, i+1);
+                    minerInfo.Gpus[i] = new GpuInfo();
+                    minerInfo.Gpus[i].minThreshold = minSpeedThreshold;
+                    minerInfo.Gpus[i].minThresholdMetTime = DateTime.Now;
+                }
             }
             for (int i = 0; i < gpuspeeds.Length; i += 2)
             {
                 double.TryParse(gpuspeeds[i + 1], out minerInfo.Gpus[i / 2].speed);
                 if (minerInfo.Gpus[i / 2].minThresholdMet())
                 {
-                    minerInfo.Gpus[size - 1].minThresholdMetTime = DateTime.Now;
+                    minerInfo.Gpus[i / 2].minThresholdMetTime = DateTime.Now;
                 }
             }
 
