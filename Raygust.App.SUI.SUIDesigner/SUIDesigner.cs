@@ -25,7 +25,10 @@ namespace Raygust.App.SUI
             InitializeComponent();
         }
 
+
+
         Control selectedControl = null;
+        Control copyControl = null;
         int selectedControlX;
         int selectedControlY;
 
@@ -44,7 +47,6 @@ namespace Raygust.App.SUI
             control.MouseUp += Control_MouseUp;
             control.PreviewKeyDown += Control_PreviewKeyDown;
             control.Paint += Control_Paint;
-            control.MouseClick += Control_MouseClick;
         }
 
         private void Control_MouseClick(object sender, MouseEventArgs e)
@@ -52,6 +54,15 @@ namespace Raygust.App.SUI
             if (e.Button == MouseButtons.Right)
             {
                 launchmenu = Cursor.Position;
+                if(copyControl != null)
+                {
+                    this.pasteToolStripMenuItem.Visible = true;
+                }
+                else
+                {
+                    this.pasteToolStripMenuItem.Visible = false;
+                }
+                
                 this.ctxMenu.Show(Cursor.Position);
             }
         }
@@ -89,6 +100,14 @@ namespace Raygust.App.SUI
 
         private void Control_MouseDown(object sender, MouseEventArgs e)
         {
+            if (e.Button == MouseButtons.Right)
+            {
+                selectedControlX = e.X;
+                selectedControlY = e.Y;
+                selectedControl = (Control)sender;
+                launchmenu = Cursor.Position;
+                this.ctxControl.Show(Cursor.Position);
+            }
             if (e.Button == MouseButtons.Left)
             {
                 selectedControlX = e.X;
@@ -263,7 +282,6 @@ namespace Raygust.App.SUI
             ToolStripItem item = (ToolStripItem)sender;
 
             Assembly asmg = Assembly.LoadWithPartialName("System.Windows.Forms");
-            //var assemblies = AppDomain.CurrentDomain.GetAssemblies().First(asm => asm.FullName.StartsWith("System.Windows.Forms,", StringComparison.CurrentCultureIgnoreCase));
             Control newControl = null;
 
             switch ((string)item.Tag)
@@ -277,6 +295,7 @@ namespace Raygust.App.SUI
                     newControl = (Control)Activator.CreateInstance(asmg.GetType("System.Windows.Forms.TextBox"));
                     TextBox UITextbox = (TextBox)newControl;
                     UITextbox.ReadOnly = true;
+                    UITextbox.ShortcutsEnabled = false;
                     UITextbox.BackColor = Color.White;
                     break;
                 default:
@@ -287,6 +306,7 @@ namespace Raygust.App.SUI
             newControl.Top = this.PointToClient(launchmenu).Y;
             newControl.Left = this.PointToClient(launchmenu).X;
             newControl.Text = item.Text;
+            newControl.MinimumSize = new Size(15, 15);
 
             Register_Control(newControl);
             this.Controls.Add(newControl);
@@ -297,8 +317,89 @@ namespace Raygust.App.SUI
             if (e.Button == MouseButtons.Right)
             {
                 launchmenu = Cursor.Position;
+                if (copyControl != null)
+                {
+                    this.pasteToolStripMenuItem.Visible = true;
+                }
+                else
+                {
+                    this.pasteToolStripMenuItem.Visible = false;
+                }
                 this.ctxMenu.Show(Cursor.Position);
             }
+        }
+
+        private void tmRefresh_Tick(object sender, EventArgs e)
+        {
+            this.Refresh();
+        }
+
+        private void SUIDesigner_Move(object sender, EventArgs e)
+        {
+            this.Update();
+        }
+
+        private void SUIDesigner_Resize(object sender, EventArgs e)
+        {
+            this.Update();
+        }
+
+        private void bringToFrontToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (selectedControl != null)
+            {
+                selectedControl.BringToFront();
+                this.Refresh();
+            }
+        }
+
+        private void sendToBackToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (selectedControl != null)
+            {
+                selectedControl.SendToBack();
+                this.Refresh();
+            }
+        }
+
+        private void copyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (selectedControl != null)
+            {
+                copyControl = selectedControl;
+            }
+        }
+
+        private void pasteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+            Control newControl = Clone(selectedControl);
+
+            newControl.Top = PointToClient(launchmenu).Y;
+            newControl.Left = PointToClient(launchmenu).X;
+            Register_Control(newControl);
+            this.Controls.Add(newControl);
+            System.Diagnostics.Debug.Print(newControl.Top.ToString());
+            System.Diagnostics.Debug.Print(newControl.Left.ToString());
+            System.Diagnostics.Debug.Print(this.Controls.Count.ToString());
+            this.Refresh();
+        }
+
+        internal Control Clone(Control controlToClone)
+        {
+            PropertyInfo[] controlProperties = typeof(Control).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            Control instance = (Control)Activator.CreateInstance(controlToClone.GetType());
+
+            foreach (PropertyInfo propInfo in controlProperties)
+            {
+                if (propInfo.CanWrite)
+                {
+                    if (propInfo.Name != "WindowTarget")
+                        propInfo.SetValue(instance, propInfo.GetValue(controlToClone, null), null);
+                }
+            }
+
+            return instance;
         }
     }
 }
