@@ -6,6 +6,7 @@ namespace Raygust.App.EthminerMan
     partial class EthminerManSvc : ServiceBase
     {
         EthminerManager manager = null;
+        bool endProcess = false;
         public EthminerManSvc()
         {
             InitializeComponent();
@@ -28,7 +29,7 @@ namespace Raygust.App.EthminerMan
 
         private void tmProcess_Tick(object sender, EventArgs e)
         {
-            manager.Process();
+            manager.Process(ref endProcess);
         }
     }
 }

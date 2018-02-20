@@ -17,6 +17,8 @@ namespace Raygust.App.EthminerMan
         static void Main(string[] args)
         {
             manager = new EthminerManager(args);
+            manager.UnknownErrorScript = Properties.Settings.Default.Restart_Path;
+            manager.UnknownErrorScriptPath = Properties.Settings.Default.Restart_Start_Path;
 
             Console.CancelKeyPress += Console_CancelKeyPress;
 
@@ -24,7 +26,7 @@ namespace Raygust.App.EthminerMan
 
             while(!manager.minerProcess.WaitForExit(CHECK_INTERVAL))
             {
-                manager.Process();
+                manager.Process(ref endProcess);
             }
 
             if(!endProcess)
@@ -34,7 +36,7 @@ namespace Raygust.App.EthminerMan
                 newStartInfo.FileName = ETHMINERMAN_FILENAME;
                 Process newProcess = new Process();
                 newProcess.StartInfo = newStartInfo;
-                Thread.Sleep(10000);
+                Thread.Sleep(manager.RestartDelay);
                 newProcess.Start();
             }
         }

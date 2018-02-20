@@ -18,6 +18,11 @@ namespace Raygust.App.EthminerMan
         public int failed = 0;
         public int duration = 300;
 
+        public bool IsUnknownError(string input)
+        {
+            return input.Contains("unknown error");
+        }
+
         public bool Parse(string input)
         {
             bool result = false;

@@ -20,9 +20,15 @@ namespace Raygust.App.EthminerMan
         bool _runningConsole = false;
         bool isDebug = false;
         EthminerParser parser = new EthminerParser();
+        DateTime _lastErrorTime = DateTime.Now;
+        int _lastErrorCount = 0;
         #endregion
 
         public Process minerProcess = new Process();
+        public int RestartDelay = 15000;
+        public string UnknownErrorScript = string.Empty;
+        public string UnknownErrorScriptPath = string.Empty;
+
 
         public EthminerManager(string[] args)
         {
@@ -45,6 +51,7 @@ namespace Raygust.App.EthminerMan
             argParser.GetParamAsInt("-dlimit", ref duration);
             parser.duration = duration;
             isDebug = argParser.ParamExist("-debug");
+            argParser.GetParamAsInt("-dstart", ref RestartDelay);
             #endregion
 
             #region Ethminer Process Information settings
@@ -69,7 +76,7 @@ namespace Raygust.App.EthminerMan
         }
 
         //Interval check on threshold condition
-        public void Process()
+        public void Process(ref bool endProcess)
         {
             Monitor.Enter(parser);
             if (parser.Break())
@@ -82,8 +89,9 @@ namespace Raygust.App.EthminerMan
                     newStartInfo.FileName = ETHMINERMAN_FILENAME;
                     Process newProcess = new Process();
                     newProcess.StartInfo = newStartInfo;
-                    Thread.Sleep(10000);
+                    Thread.Sleep(RestartDelay);
                     newProcess.Start();
+                    endProcess = true;
                 }
                 else
                 {
@@ -103,6 +111,22 @@ namespace Raygust.App.EthminerMan
             }
         }
 
+        private void HandleRestartScript()
+        {
+            ProcessStartInfo newStartInfo = new ProcessStartInfo();
+            newStartInfo.Arguments = String.Join(" ", _args);
+            string[] parts = UnknownErrorScript.Split(' ');
+            newStartInfo.FileName = parts[0];
+            if (parts.Length > 1)
+            {
+                newStartInfo.Arguments = string.Join(" ", parts, 1, parts.Length - 1);
+            }
+            newStartInfo.WorkingDirectory = UnknownErrorScriptPath;
+            Process newProcess = new Process();
+            newProcess.StartInfo = newStartInfo;
+            newProcess.Start();
+        }
+
         private void ProcessConsoleOutput(object sender, DataReceivedEventArgs e)
         {
             Monitor.Enter(parser);
@@ -117,6 +141,13 @@ namespace Raygust.App.EthminerMan
             {
                 Console.ForegroundColor = ConsoleColor.Green;
                 parser.PrintSpeedMessage();
+                if (parser.IsUnknownError(e.Data))
+                {
+                    if(string.IsNullOrEmpty(UnknownErrorScript))
+                    {
+                        HandleRestartScript();
+                    }
+                }
             }
             
             Monitor.Exit(parser);
